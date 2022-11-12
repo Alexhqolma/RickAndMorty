@@ -29,9 +29,8 @@ public class MovieCharacterServiceImpl implements MovieCharacterService {
     }
 
     @Scheduled(cron = "0 8 * * * ?")
-    @Override
     public void syncExternalCharacters() {
-        ApiResponseDto apiResponseDto = httpClient.get("https://rickandmortyapi.com/api/character",
+        ApiResponseDto apiResponseDto = httpClient.get("${api.url}",
                 ApiResponseDto.class);
         saveDtosToDb(apiResponseDto);
         while (apiResponseDto.getInfo().getNext() != null) {
