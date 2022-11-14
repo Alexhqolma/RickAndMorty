@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import rick.and.morty.rickandmortyapp.dto.external.ApiCharacterDto;
@@ -28,6 +29,7 @@ public class MovieCharacterServiceImpl implements MovieCharacterService {
         this.mapper = mapper;
     }
 
+    @PostConstruct
     @Scheduled(cron = "0 8 * * * ?")
     public void syncExternalCharacters() {
         ApiResponseDto apiResponseDto = httpClient.get("${api.url}",
