@@ -7,38 +7,33 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import rick.and.morty.rickandmortyapp.dto.external.ApiCharacterDto;
-import rick.and.morty.rickandmortyapp.dto.external.ApiResponseDto;
+import rick.and.morty.rickandmortyapp.dto.external.ExternalCharacterDto;
+import rick.and.morty.rickandmortyapp.dto.external.ExternalResponseDto;
 import rick.and.morty.rickandmortyapp.dto.mapper.MovieCharacterMapper;
 import rick.and.morty.rickandmortyapp.model.MovieCharacter;
 import rick.and.morty.rickandmortyapp.repository.MovieCharacterRepository;
 
 @Service
+@RequiredArgsConstructor
 public class MovieCharacterServiceImpl implements MovieCharacterService {
     private final HttpClient httpClient;
     private final MovieCharacterRepository movieCharacterRepository;
     private final MovieCharacterMapper mapper;
 
-    public MovieCharacterServiceImpl(HttpClient httpClient,
-                                     MovieCharacterRepository movieCharacterRepository,
-                                     MovieCharacterMapper mapper) {
-        this.httpClient = httpClient;
-        this.movieCharacterRepository = movieCharacterRepository;
-        this.mapper = mapper;
-    }
-
     @PostConstruct
     @Scheduled(cron = "0 8 * * * ?")
     public void syncExternalCharacters() {
-        ApiResponseDto apiResponseDto = httpClient.get("${api.url}",
-                ApiResponseDto.class);
-        saveDtosToDb(apiResponseDto);
-        while (apiResponseDto.getInfo().getNext() != null) {
-            apiResponseDto = httpClient.get(apiResponseDto.getInfo().getNext(),
-                    ApiResponseDto.class);
-            saveDtosToDb(apiResponseDto);
+        ExternalResponseDto externalResponseDto = httpClient.get("${api.url}",
+                ExternalResponseDto.class);
+        saveDtosToDb(externalResponseDto);
+        while (externalResponseDto.getInfo().getNext() != null) {
+            externalResponseDto = httpClient.get(externalResponseDto.getInfo().getNext(),
+                    ExternalResponseDto.class);
+            saveDtosToDb(externalResponseDto);
         }
     }
 
@@ -46,7 +41,7 @@ public class MovieCharacterServiceImpl implements MovieCharacterService {
     public MovieCharacter getRandomCharacter() {
         long count = movieCharacterRepository.count();
         long randomId = (long) (Math.random() * count);
-        return movieCharacterRepository.getById(randomId);
+        return movieCharacterRepository.findById(randomId).orElseThrow();
     }
 
     @Override
@@ -54,9 +49,9 @@ public class MovieCharacterServiceImpl implements MovieCharacterService {
         return movieCharacterRepository.findAllByNameContains(namePart);
     }
 
-    private void saveDtosToDb(ApiResponseDto apiResponseDto) {
-        Map<Long, ApiCharacterDto> externalDtos = Arrays.stream(apiResponseDto.getResults())
-                .collect(Collectors.toMap(ApiCharacterDto::getId, Function.identity()));
+    private void saveDtosToDb(ExternalResponseDto externalResponseDto) {
+        Map<Long, ExternalCharacterDto> externalDtos = Arrays.stream(externalResponseDto.getResults())
+                .collect(Collectors.toMap(ExternalCharacterDto::getId, Function.identity()));
         Set<Long> externalIds = externalDtos.keySet();
         List<MovieCharacter> existingCharacters = movieCharacterRepository
                 .findAllByExternalIdIn(externalIds);
