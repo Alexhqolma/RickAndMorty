@@ -4,7 +4,6 @@ import java.util.List;
 import rick.and.morty.rickandmortyapp.model.MovieCharacter;
 
 public interface MovieCharacterService {
-    void syncExternalCharacters();
 
     MovieCharacter getRandomCharacter();
 

@@ -5,7 +5,7 @@ public enum Status {
     DEAD("Dead"),
     UNKNOWN("Unknown");
 
-    private String value;
+    private final String value;
 
     Status(String value) {
         this.value = value;
